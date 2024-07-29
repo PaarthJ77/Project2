@@ -1,16 +1,10 @@
-/* 
- * File: main.cpp
- * Author: YOUR NAME HERE
- * Created on DATE AND TIME HERE
- * Purpose: Connect 4 Game (Simplified Version)
- */
-
 // System Libraries
 #include <iostream>  // Input/Output Stream Library
 #include <iomanip>   // Formatting Library
 #include <ctime>     // Unique Seed Value Library
 #include <cstdlib>   // Random Value Library
 #include <string>    // String Library
+#include <fstream>   // File I/O
 using namespace std;
 
 // Function Prototypes
@@ -19,6 +13,8 @@ void printBoard(const char[][7], int, int);
 bool makeMove(char[][7], int, char, int);
 bool checkWin(const char[][7], char, int, int);
 bool checkFull(const char[][7], int, int);
+void saveGame(const char[][7], const string&, int, int);
+void loadGame(char[][7], const string&, int, int);
 
 // Program Execution Begins Here
 int main(int argc, char **argv) {
@@ -26,15 +22,26 @@ int main(int argc, char **argv) {
     const int ROWS = 6;
     const int COLS = 7;
     char board[ROWS][COLS];
+    string filename = "connect4_save.dat";
     char player = '1';  // Player 1 represented by '1' and Player 2 represented by '2'
     bool gameWon = false, boardFull = false;
     int colChoice;
+    char loadChoice;
 
     // Set the Random Number Seed
     srand(static_cast<unsigned int>(time(0)));
 
     // Initialize the game board
     initializeBoard(board, ROWS, COLS);
+
+    // Ask if user wants to load a previous game
+    cout << "Do you want to load a previous game? (y/n): ";
+    cin >> loadChoice;
+
+    if (loadChoice == 'y' || loadChoice == 'Y') {
+        loadGame(board, filename, ROWS, COLS);
+    }
+
     // Game Loop
     while (!gameWon && !boardFull) {
         printBoard(board, ROWS, COLS);
@@ -64,6 +71,9 @@ int main(int argc, char **argv) {
     } else {
         cout << "The game is a draw!" << endl;
     }
+
+    // Save the game state
+    saveGame(board, filename, ROWS, COLS);
 
     return 0;
 }
@@ -150,4 +160,33 @@ bool checkFull(const char board[][7], int rows, int cols) {
         }
     }
     return true;
+}
+
+void saveGame(const char board[][7], const string &filename, int rows, int cols) {
+    ofstream outFile(filename);
+    if (outFile.is_open()) {
+        for (int i = 0; i < rows; ++i) {
+            for (int j = 0; j < cols; ++j) {
+                outFile << board[i][j] << ' ';
+            }
+            outFile << endl;
+        }
+        outFile.close();
+    } else {
+        cout << "Unable to open file for saving." << endl;
+    }
+}
+
+void loadGame(char board[][7], const string &filename, int rows, int cols) {
+    ifstream inFile(filename);
+    if (inFile.is_open()) {
+        for (int i = 0; i < rows; ++i) {
+            for (int j = 0; j < cols; ++j) {
+                inFile >> board[i][j];
+            }
+        }
+        inFile.close();
+    } else {
+        cout << "Unable to open file for loading." << endl;
+    }
 }
