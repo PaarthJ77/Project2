@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
     initBrd(board, ROWS, COLS);
 
     // Ask if user wants to load a previous game
-    cout << "Do you want to load a previous game? (y/n): ";
+    cout << "Would you like to load a previous game? (y/n): ";
     cin >> loadChc;
 
     if (loadChc == 'y' || loadChc == 'Y') {
