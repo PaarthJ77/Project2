@@ -1,3 +1,10 @@
+/* 
+ * File: main.cpp
+ * Author: YOUR NAME HERE
+ * Created on DATE AND TIME HERE
+ * Purpose: Connect 4 Game 
+ */
+
 // System Libraries
 #include <iostream>  // Input/Output Stream Library
 #include <iomanip>   // Formatting Library
@@ -8,90 +15,89 @@
 using namespace std;
 
 // Function Prototypes
-void initializeBoard(char[][7], int, int);
-void printBoard(const char[][7], int, int);
+void initBrd(char[][7], int, int);
+void printBrd(const char[][7], int, int);
 bool makeMove(char[][7], int, char, int);
 bool checkWin(const char[][7], char, int, int);
 bool checkFull(const char[][7], int, int);
-void saveGame(const char[][7], const string&, int, int);
-void loadGame(char[][7], const string&, int, int);
+void saveGme(const char[][7], const string&, int, int);
+void loadGme(char[][7], const string&, int, int);
+void welcomeMsg();
 
-// Program Execution Begins Here
 int main(int argc, char **argv) {
-    // Declare all Variables Here
     const int ROWS = 6;
     const int COLS = 7;
     char board[ROWS][COLS];
-    string filename = "connect4_save.dat";
-    char player = '1';  // Player 1 represented by '1' and Player 2 represented by '2'
-    bool gameWon = false, boardFull = false;
-    int colChoice;
-    char loadChoice;
+    string fname = "connect4.dat";
+    char player = '1';
+    bool gmeWon = false, brdFull = false;
+    int colChc;
+    char loadChc;
 
-    // Set the Random Number Seed
     srand(static_cast<unsigned int>(time(0)));
 
+    // Display welcome message
+    welcomeMsg();
+
     // Initialize the game board
-    initializeBoard(board, ROWS, COLS);
+    initBrd(board, ROWS, COLS);
 
     // Ask if user wants to load a previous game
     cout << "Do you want to load a previous game? (y/n): ";
-    cin >> loadChoice;
+    cin >> loadChc;
 
-    if (loadChoice == 'y' || loadChoice == 'Y') {
-        loadGame(board, filename, ROWS, COLS);
+    if (loadChc == 'y' || loadChc == 'Y') {
+        loadGme(board, fname, ROWS, COLS);
     }
 
     // Game Loop
-    while (!gameWon && !boardFull) {
-        printBoard(board, ROWS, COLS);
+    while (!gmeWon && !brdFull) {
+        printBrd(board, ROWS, COLS);
         cout << "Player " << player << ", enter a column (1-7): ";
-        cin >> colChoice;
+        cin >> colChc;
 
-        // Adjust for zero-based indexing
-        colChoice--;
+        colChc--;
 
-        while (colChoice < 0 || colChoice >= COLS || !makeMove(board, colChoice, player, ROWS)) {
+        while (colChc < 0 || colChc >= COLS || !makeMove(board, colChc, player, ROWS)) {
             cout << "Invalid move. Try again: ";
-            cin >> colChoice;
-            colChoice--;  // Adjust for zero-based indexing
+            cin >> colChc;
+            colChc--;
         }
 
-        gameWon = checkWin(board, player, ROWS, COLS);
-        if (!gameWon) {
-            boardFull = checkFull(board, ROWS, COLS);
+        gmeWon = checkWin(board, player, ROWS, COLS);
+        if (!gmeWon) {
+            brdFull = checkFull(board, ROWS, COLS);
             player = (player == '1') ? '2' : '1';
         }
     }
 
-    printBoard(board, ROWS, COLS);
+    printBrd(board, ROWS, COLS);
 
-    if (gameWon) {
+    if (gmeWon) {
         cout << "Player " << player << " wins!" << endl;
     } else {
         cout << "The game is a draw!" << endl;
     }
 
-    // Save the game state
-    saveGame(board, filename, ROWS, COLS);
+    saveGme(board, fname, ROWS, COLS);
 
     return 0;
 }
 
-void initializeBoard(char board[][7], int rows, int cols) {
+void initBrd(char brd[][7], int rows, int cols) {
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
-            board[i][j] = 'O';
+            brd[i][j] = 'O';
         }
     }
 }
 
-void printBoard(const char board[][7], int rows, int cols) {
+void printBrd(const char brd[][7], int rows, int cols) {
     cout << "                    _____________________________" << endl;
     for (int i = 0; i < rows; ++i) {
         cout << "                    | ";
         for (int j = 0; j < cols; ++j) {
-            cout << board[i][j] << " | ";
+            cout << "\033[1m" << brd[i][j] << "\033[0m" << " | ";  // Bold characters
         }
         cout << endl;
     }
@@ -99,22 +105,22 @@ void printBoard(const char board[][7], int rows, int cols) {
     cout << "                      1   2   3   4   5   6   7            " << endl;
 }
 
-bool makeMove(char board[][7], int col, char player, int rows) {
+bool makeMove(char brd[][7], int col, char plyr, int rows) {
     for (int i = rows - 1; i >= 0; --i) {
-        if (board[i][col] == 'O') {
-            board[i][col] = player;
+        if (brd[i][col] == 'O') {
+            brd[i][col] = plyr;
             return true;
         }
     }
     return false;
 }
 
-bool checkWin(const char board[][7], char player, int rows, int cols) {
+bool checkWin(const char brd[][7], char plyr, int rows, int cols) {
     // Check horizontal
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols - 3; ++j) {
-            if (board[i][j] == player && board[i][j + 1] == player &&
-                board[i][j + 2] == player && board[i][j + 3] == player) {
+            if (brd[i][j] == plyr && brd[i][j + 1] == plyr &&
+                brd[i][j + 2] == plyr && brd[i][j + 3] == plyr) {
                 return true;
             }
         }
@@ -123,8 +129,8 @@ bool checkWin(const char board[][7], char player, int rows, int cols) {
     // Check vertical
     for (int i = 0; i < rows - 3; ++i) {
         for (int j = 0; j < cols; ++j) {
-            if (board[i][j] == player && board[i + 1][j] == player &&
-                board[i + 2][j] == player && board[i + 3][j] == player) {
+            if (brd[i][j] == plyr && brd[i + 1][j] == plyr &&
+                brd[i + 2][j] == plyr && brd[i + 3][j] == plyr) {
                 return true;
             }
         }
@@ -133,8 +139,8 @@ bool checkWin(const char board[][7], char player, int rows, int cols) {
     // Check diagonal (bottom-left to top-right)
     for (int i = 3; i < rows; ++i) {
         for (int j = 0; j < cols - 3; ++j) {
-            if (board[i][j] == player && board[i - 1][j + 1] == player &&
-                board[i - 2][j + 2] == player && board[i - 3][j + 3] == player) {
+            if (brd[i][j] == plyr && brd[i - 1][j + 1] == plyr &&
+                brd[i - 2][j + 2] == plyr && brd[i - 3][j + 3] == plyr) {
                 return true;
             }
         }
@@ -143,8 +149,8 @@ bool checkWin(const char board[][7], char player, int rows, int cols) {
     // Check diagonal (top-left to bottom-right)
     for (int i = 0; i < rows - 3; ++i) {
         for (int j = 0; j < cols - 3; ++j) {
-            if (board[i][j] == player && board[i + 1][j + 1] == player &&
-                board[i + 2][j + 2] == player && board[i + 3][j + 3] == player) {
+            if (brd[i][j] == plyr && brd[i + 1][j + 1] == plyr &&
+                brd[i + 2][j + 2] == plyr && brd[i + 3][j + 3] == plyr) {
                 return true;
             }
         }
@@ -153,40 +159,49 @@ bool checkWin(const char board[][7], char player, int rows, int cols) {
     return false;
 }
 
-bool checkFull(const char board[][7], int rows, int cols) {
+bool checkFull(const char brd[][7], int rows, int cols) {
     for (int j = 0; j < cols; ++j) {
-        if (board[0][j] == 'O') {
+        if (brd[0][j] == 'O') {
             return false;
         }
     }
     return true;
 }
 
-void saveGame(const char board[][7], const string &filename, int rows, int cols) {
-    ofstream outFile(filename);
-    if (outFile.is_open()) {
+void saveGme(const char brd[][7], const string &fname, int rows, int cols) {
+    ofstream outFle(fname);
+    if (outFle.is_open()) {
         for (int i = 0; i < rows; ++i) {
             for (int j = 0; j < cols; ++j) {
-                outFile << board[i][j] << ' ';
+                outFle << brd[i][j] << ' ';
             }
-            outFile << endl;
+            outFle << endl;
         }
-        outFile.close();
+        outFle.close();
     } else {
         cout << "Unable to open file for saving." << endl;
     }
 }
 
-void loadGame(char board[][7], const string &filename, int rows, int cols) {
-    ifstream inFile(filename);
-    if (inFile.is_open()) {
+void loadGme(char brd[][7], const string &fname, int rows, int cols) {
+    ifstream inFle(fname);
+    if (inFle.is_open()) {
         for (int i = 0; i < rows; ++i) {
             for (int j = 0; j < cols; ++j) {
-                inFile >> board[i][j];
+                inFle >> brd[i][j];
             }
         }
-        inFile.close();
+        inFle.close();
     } else {
         cout << "Unable to open file for loading." << endl;
     }
 }
+
+void welcomeMsg() {
+    cout << "================================" << endl;
+    cout << "      * * * WELCOME! * * *" << endl;
+    cout << "        * * * TO * * *" << endl;
+    cout << "   * * * CONNECT FOUR * * *" << endl;
+    cout << "=================================" << endl;
+}
+
