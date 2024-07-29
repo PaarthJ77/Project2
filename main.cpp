@@ -26,9 +26,9 @@ void loadGame(char[][7], const string&, int, int);
 void welcomeMsg();
 void mainMenu(bool&, bool&);
 void gameLoop(char[][7], int, int, char&, bool&, bool&);
-void displayStats(int, int, int);
-void saveStats(int, int, int);
-void loadStats(int&, int&, int&);
+void displayStats(int, int, int, int);
+void saveStats(int, int, int, int);
+void loadStats(int&, int&, int&, int&);
 
 // Program Execution Begins Here
 int main(int argc, char **argv) {
@@ -39,12 +39,12 @@ int main(int argc, char **argv) {
     string filename = "connect4_save.dat";
     char player = '1';  // Player 1 represented by '1' and Player 2 represented by '2'
     bool gameWon = false, boardFull = false;
-    int gamesPlayed = 0, gamesWon = 0, gamesDrawn = 0;
+    int gamesPlayed = 0, gamesDrawn = 0, player1Wins = 0, player2Wins = 0;
     bool loadPrevGame = false;
     bool viewStats = false;
 
     // Load Statistics
-    loadStats(gamesPlayed, gamesWon, gamesDrawn);
+    loadStats(gamesPlayed, player1Wins, player2Wins, gamesDrawn);
 
     // Display Welcome Message
     welcomeMsg();
@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
     mainMenu(loadPrevGame, viewStats);
 
     if (viewStats) {
-        displayStats(gamesPlayed, gamesWon, gamesDrawn);
+        displayStats(gamesPlayed, gamesDrawn, player1Wins, player2Wins);
         return 0;
     }
 
@@ -71,13 +71,17 @@ int main(int argc, char **argv) {
     // Update Statistics
     gamesPlayed++;
     if (gameWon) {
-        gamesWon++;
+        if (player == '1') {
+            player1Wins++;
+        } else {
+            player2Wins++;
+        }
     } else {
         gamesDrawn++;
     }
 
     // Save Statistics
-    saveStats(gamesPlayed, gamesWon, gamesDrawn);
+    saveStats(gamesPlayed, player1Wins, player2Wins, gamesDrawn);
 
     // Save the game state
     saveGame(board, filename, ROWS, COLS);
@@ -264,31 +268,33 @@ void gameLoop(char board[][7], int rows, int cols, char &player, bool &gameWon, 
     }
 }
 
-void displayStats(int gamesPlayed, int gamesWon, int gamesDrawn) {
+void displayStats(int gamesPlayed, int gamesDrawn, int player1Wins, int player2Wins) {
     cout << "Game Statistics:" << endl;
     cout << "Total Games Played: " << gamesPlayed << endl;
-    cout << "Total Games Won: " << gamesWon << endl;
     cout << "Total Games Drawn: " << gamesDrawn << endl;
+    cout << "Total Games Won by Player 1: " << player1Wins << endl;
+    cout << "Total Games Won by Player 2: " << player2Wins << endl;
 }
 
-void saveStats(int gamesPlayed, int gamesWon, int gamesDrawn) {
+void saveStats(int gamesPlayed, int player1Wins, int player2Wins, int gamesDrawn) {
     ofstream outFile("connect4_stats.dat");
     if (outFile.is_open()) {
-        outFile << gamesPlayed << ' ' << gamesWon << ' ' << gamesDrawn << endl;
+        outFile << gamesPlayed << ' ' << player1Wins << ' ' << player2Wins << ' ' << gamesDrawn << endl;
         outFile.close();
     } else {
         cout << "Unable to open file for saving statistics." << endl;
     }
 }
 
-void loadStats(int &gamesPlayed, int &gamesWon, int &gamesDrawn) {
+void loadStats(int &gamesPlayed, int &player1Wins, int &player2Wins, int &gamesDrawn) {
     ifstream inFile("connect4_stats.dat");
     if (inFile.is_open()) {
-        inFile >> gamesPlayed >> gamesWon >> gamesDrawn;
+        inFile >> gamesPlayed >> player1Wins >> player2Wins >> gamesDrawn;
         inFile.close();
     } else {
         gamesPlayed = 0;
-        gamesWon = 0;
+        player1Wins = 0;
+        player2Wins = 0;
         gamesDrawn = 0;
     }
 }
