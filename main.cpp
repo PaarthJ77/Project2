@@ -38,6 +38,7 @@ void loadLeaderboard(vector<pair<string, int> >&);
 void getPlayerDetails(string&, string&, char&, char&);
 void updateLeaderboard(const string&, const string&, bool);
 bool comparePairs(const pair<string, int> &, const pair<string, int> &);
+float calculateWinPercentage(int, int); // New function prototype for float usage
 
 // Program Execution Begins Here
 int main(int argc, char **argv) {
@@ -284,7 +285,7 @@ void loadGame(char board[][7], const string &filename, int rows, int cols) {
 }
 
 void gameLoop(char board[][7], int rows, int cols, char &player, bool &gameWon, bool &boardFull, string &player1, string &player2, char &player1Char, char &player2Char) {
-    while (!gameWon && !boardFull) {
+    do {
         printBoard(board, rows, cols);
         cout << (player == player1Char ? player1 : player2) << " (" << (player == player1Char ? "Player 1" : "Player 2") << "), enter a column (1-7): ";
         int colChoice;
@@ -302,7 +303,7 @@ void gameLoop(char board[][7], int rows, int cols, char &player, bool &gameWon, 
             boardFull = checkFull(board, rows, cols);
             player = (player == player1Char) ? player2Char : player1Char;
         }
-    }
+    } while (!gameWon && !boardFull);
 
     printBoard(board, rows, cols);
 
@@ -314,11 +315,14 @@ void gameLoop(char board[][7], int rows, int cols, char &player, bool &gameWon, 
 }
 
 void displayStats(int gamesPlayed, int gamesDrawn, int player1Wins, int player2Wins) {
+    float winPercentage1 = calculateWinPercentage(player1Wins, gamesPlayed);
+    float winPercentage2 = calculateWinPercentage(player2Wins, gamesPlayed);
+
     cout << "Game Statistics:" << endl;
     cout << "Total Games Played: " << gamesPlayed << endl;
     cout << "Total Games Drawn: " << gamesDrawn << endl;
-    cout << "Total Games Won by Player 1: " << player1Wins << endl;
-    cout << "Total Games Won by Player 2: " << player2Wins << endl;
+    cout << "Total Games Won by Player 1: " << player1Wins << " (" << winPercentage1 << "%)" << endl;
+    cout << "Total Games Won by Player 2: " << player2Wins << " (" << winPercentage2 << "%)" << endl;
 }
 
 void saveStats(int gamesPlayed, int player1Wins, int player2Wins, int gamesDrawn) {
@@ -438,3 +442,9 @@ void updateLeaderboard(const string &player1, const string &player2, bool player
 
     saveLeaderboard(leaderboard);
 }
+
+float calculateWinPercentage(int wins, int gamesPlayed) {
+    if (gamesPlayed == 0) return 0.0f;
+    return (static_cast<float>(wins) / gamesPlayed) * 100.0f;
+}
+
