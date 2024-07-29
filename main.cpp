@@ -49,12 +49,24 @@ int main(int argc, char **argv) {
     // Display Welcome Message
     welcomeMsg();
 
+    // Wait for Enter to be pressed
+    cout << "Press Enter TWICE to start...";
+    cin.ignore();
+    cin.get();
+
     // Main Menu
     mainMenu(loadPrevGame, viewStats);
 
     if (viewStats) {
         displayStats(gamesPlayed, gamesDrawn, player1Wins, player2Wins);
-        return 0;
+        char returnChoice;
+        cout << "Return to menu? (y/n): ";
+        cin >> returnChoice;
+        if (returnChoice == 'y' || returnChoice == 'Y') {
+            mainMenu(loadPrevGame, viewStats);
+        } else {
+            return 0;
+        }
     }
 
     // Load previous game if chosen
