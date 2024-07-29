@@ -2,7 +2,7 @@
  * File: main.cpp
  * Author: YOUR NAME HERE
  * Created on DATE AND TIME HERE
- * Purpose: Connect 4 Game
+ * Purpose: Connect 4 Game with Nicknames and Leaderboard
  */
 
 // System Libraries
@@ -13,6 +13,9 @@
 #include <string>    // String Library
 #include <fstream>   // File I/O
 #include <cmath>     // Math Library
+#include <vector>    // STL Vectors
+#include <utility>   // pair
+#include <algorithm> // sort
 using namespace std;
 
 // Function Prototypes
@@ -24,11 +27,17 @@ bool checkFull(const char[][7], int, int);
 void saveGame(const char[][7], const string&, int, int);
 void loadGame(char[][7], const string&, int, int);
 void welcomeMsg();
-void mainMenu(bool&, bool&);
-void gameLoop(char[][7], int, int, char&, bool&, bool&);
+void mainMenu(bool&, bool&, bool&);
+void gameLoop(char[][7], int, int, char&, bool&, bool&, string&, string&, char&, char&);
 void displayStats(int, int, int, int);
 void saveStats(int, int, int, int);
 void loadStats(int&, int&, int&, int&);
+void displayLeaderboard();
+void saveLeaderboard(const vector<pair<string, int> >&);
+void loadLeaderboard(vector<pair<string, int> >&);
+void getPlayerDetails(string&, string&, char&, char&);
+void updateLeaderboard(const string&, const string&, bool);
+bool comparePairs(const pair<string, int> &, const pair<string, int> &);
 
 // Program Execution Begins Here
 int main(int argc, char **argv) {
@@ -42,6 +51,9 @@ int main(int argc, char **argv) {
     int gamesPlayed = 0, gamesDrawn = 0, player1Wins = 0, player2Wins = 0;
     bool loadPrevGame = false;
     bool viewStats = false;
+    bool viewLeaderboard = false;
+    string player1, player2;
+    char player1Char = '1', player2Char = '2';
 
     // Load Statistics
     loadStats(gamesPlayed, player1Wins, player2Wins, gamesDrawn);
@@ -55,7 +67,7 @@ int main(int argc, char **argv) {
     cin.get();
 
     // Main Menu
-    mainMenu(loadPrevGame, viewStats);
+    mainMenu(loadPrevGame, viewStats, viewLeaderboard);
 
     if (viewStats) {
         displayStats(gamesPlayed, gamesDrawn, player1Wins, player2Wins);
@@ -63,11 +75,26 @@ int main(int argc, char **argv) {
         cout << "Return to menu? (y/n): ";
         cin >> returnChoice;
         if (returnChoice == 'y' || returnChoice == 'Y') {
-            mainMenu(loadPrevGame, viewStats);
+            mainMenu(loadPrevGame, viewStats, viewLeaderboard);
         } else {
             return 0;
         }
     }
+
+    if (viewLeaderboard) {
+        displayLeaderboard();
+        char returnChoice;
+        cout << "Return to menu? (y/n): ";
+        cin >> returnChoice;
+        if (returnChoice == 'y' || returnChoice == 'Y') {
+            mainMenu(loadPrevGame, viewStats, viewLeaderboard);
+        } else {
+            return 0;
+        }
+    }
+
+    // Get player details
+    getPlayerDetails(player1, player2, player1Char, player2Char);
 
     // Load previous game if chosen
     if (loadPrevGame) {
@@ -78,15 +105,17 @@ int main(int argc, char **argv) {
     }
 
     // Game Loop
-    gameLoop(board, ROWS, COLS, player, gameWon, boardFull);
+    gameLoop(board, ROWS, COLS, player, gameWon, boardFull, player1, player2, player1Char, player2Char);
 
     // Update Statistics
     gamesPlayed++;
     if (gameWon) {
-        if (player == '1') {
+        if (player == player1Char) {
             player1Wins++;
+            updateLeaderboard(player1, player2, true);
         } else {
             player2Wins++;
+            updateLeaderboard(player1, player2, false);
         }
     } else {
         gamesDrawn++;
@@ -109,13 +138,14 @@ void welcomeMsg() {
     cout << "=================================" << endl;
 }
 
-void mainMenu(bool &loadPrevGame, bool &viewStats) {
+void mainMenu(bool &loadPrevGame, bool &viewStats, bool &viewLeaderboard) {
     int choice;
     cout << "Main Menu:" << endl;
     cout << "1. Start New Game" << endl;
     cout << "2. Load Game" << endl;
     cout << "3. View Stats" << endl;
-    cout << "4. Exit" << endl;
+    cout << "4. View Leaderboard" << endl;
+    cout << "5. Exit" << endl;
     cout << "Enter your choice: ";
     cin >> choice;
 
@@ -130,10 +160,13 @@ void mainMenu(bool &loadPrevGame, bool &viewStats) {
             viewStats = true;
             return;
         case 4:
+            viewLeaderboard = true;
+            return;
+        case 5:
             exit(0);
         default:
             cout << "Invalid choice. Please try again." << endl;
-            mainMenu(loadPrevGame, viewStats);
+            mainMenu(loadPrevGame, viewStats, viewLeaderboard);
     }
 }
 
@@ -250,10 +283,10 @@ void loadGame(char board[][7], const string &filename, int rows, int cols) {
     }
 }
 
-void gameLoop(char board[][7], int rows, int cols, char &player, bool &gameWon, bool &boardFull) {
+void gameLoop(char board[][7], int rows, int cols, char &player, bool &gameWon, bool &boardFull, string &player1, string &player2, char &player1Char, char &player2Char) {
     while (!gameWon && !boardFull) {
         printBoard(board, rows, cols);
-        cout << "Player " << player << ", enter a column (1-7): ";
+        cout << (player == player1Char ? player1 : player2) << " (" << (player == player1Char ? "Player 1" : "Player 2") << "), enter a column (1-7): ";
         int colChoice;
         cin >> colChoice;
         colChoice--;
@@ -267,14 +300,14 @@ void gameLoop(char board[][7], int rows, int cols, char &player, bool &gameWon, 
         gameWon = checkWin(board, player, rows, cols);
         if (!gameWon) {
             boardFull = checkFull(board, rows, cols);
-            player = (player == '1') ? '2' : '1';
+            player = (player == player1Char) ? player2Char : player1Char;
         }
     }
 
     printBoard(board, rows, cols);
 
     if (gameWon) {
-        cout << "Player " << player << " wins!" << endl;
+        cout << (player == player1Char ? player1 : player2) << " (" << (player == player1Char ? "Player 1" : "Player 2") << ") wins!" << endl;
     } else {
         cout << "The game is a draw!" << endl;
     }
@@ -309,4 +342,99 @@ void loadStats(int &gamesPlayed, int &player1Wins, int &player2Wins, int &gamesD
         player2Wins = 0;
         gamesDrawn = 0;
     }
+}
+
+bool comparePairs(const pair<string, int> &a, const pair<string, int> &b) {
+    return a.second > b.second;
+}
+
+void displayLeaderboard() {
+    vector<pair<string, int> > leaderboard;
+    loadLeaderboard(leaderboard);
+
+    // Sort leaderboard by number of wins in descending order
+    sort(leaderboard.begin(), leaderboard.end(), comparePairs);
+
+    cout << "Leaderboard:" << endl;
+    cout << "Rank  Player          Wins" << endl;
+    cout << "----------------------------" << endl;
+    for (size_t i = 0; i < leaderboard.size(); ++i) {
+        cout << setw(4) << (i + 1) << "  " << setw(14) << leaderboard[i].first << "  " << leaderboard[i].second << endl;
+    }
+}
+
+void saveLeaderboard(const vector<pair<string, int> > &leaderboard) {
+    ofstream outFile("connect4_leaderboard.dat");
+    if (outFile.is_open()) {
+        for (size_t i = 0; i < leaderboard.size(); ++i) {
+            outFile << leaderboard[i].first << ' ' << leaderboard[i].second << endl;
+        }
+        outFile.close();
+    } else {
+        cout << "Unable to open file for saving leaderboard." << endl;
+    }
+}
+
+void loadLeaderboard(vector<pair<string, int> > &leaderboard) {
+    ifstream inFile("connect4_leaderboard.dat");
+    if (inFile.is_open()) {
+        leaderboard.clear();
+        string playerName;
+        int wins;
+        while (inFile >> playerName >> wins) {
+            leaderboard.push_back(make_pair(playerName, wins));
+        }
+        inFile.close();
+    }
+}
+
+void getPlayerDetails(string &player1, string &player2, char &player1Char, char &player2Char) {
+    cout << "Enter Player 1 nickname: ";
+    cin >> player1;
+    cout << "Enter Player 1 character (default '1'): ";
+    cin.ignore();
+    player1Char = cin.get();
+    if (player1Char == '\n' || player1Char == ' ') {
+        player1Char = '1';
+    }
+
+    cout << "Enter Player 2 nickname: ";
+    cin >> player2;
+    cout << "Enter Player 2 character (default '2'): ";
+    cin.ignore();
+    player2Char = cin.get();
+    if (player2Char == '\n' || player2Char == ' ') {
+        player2Char = '2';
+    }
+}
+
+void updateLeaderboard(const string &player1, const string &player2, bool player1Won) {
+    vector<pair<string, int> > leaderboard;
+    loadLeaderboard(leaderboard);
+
+    bool player1Found = false, player2Found = false;
+    for (size_t i = 0; i < leaderboard.size(); ++i) {
+        if (leaderboard[i].first == player1) {
+            if (player1Won) leaderboard[i].second++;
+            player1Found = true;
+        }
+        if (leaderboard[i].first == player2) {
+            if (!player1Won) leaderboard[i].second++;
+            player2Found = true;
+        }
+    }
+
+    if (!player1Found && player1Won) {
+        leaderboard.push_back(make_pair(player1, 1));
+    } else if (!player1Found) {
+        leaderboard.push_back(make_pair(player1, 0));
+    }
+
+    if (!player2Found && !player1Won) {
+        leaderboard.push_back(make_pair(player2, 1));
+    } else if (!player2Found) {
+        leaderboard.push_back(make_pair(player2, 0));
+    }
+
+    saveLeaderboard(leaderboard);
 }
